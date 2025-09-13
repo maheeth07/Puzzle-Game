@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Sliding Puzzle with Arrow Keys</title>
+<style>
+  body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background: #222;
+    font-family: sans-serif;
+  }
+
+  #puzzle {
+    position: relative;
+    width: 340px;
+    height: 340px;
+    background: #333;
+    border-radius: 10px;
+  }
+
+  .tile {
+    position: absolute;
+    width: 80px;
+    height: 80px;
+    background: #4caf50;
+    color: white;
+    font-size: 24px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: top 0.2s, left 0.2s;
+    user-select: none;
+  }
+
+  .empty {
+    display: none;
+  }
+</style>
+</head>
+<body>
+<div id="puzzle"></div>
+
+<script>
+const puzzle = document.getElementById("puzzle");
+const tileSize = 80;
+const gap = 5;
+
+// Initialize 2D array
+let tiles = [
+  [1,2,3,4],
+  [5,6,7,8],
+  [9,10,11,12],
+  [13,14,15,0]
+];
+
+// Shuffle tiles
+function shuffleTiles() {
+  let flat = tiles.flat();
+  for (let i = flat.length - 1; i > 0; i--) {
+    let j = Math.floor(Math.random() * (i + 1));
+    [flat[i], flat[j]] = [flat[j], flat[i]];
+  }
+  for (let r=0; r<4; r++)
+    for (let c=0; c<4; c++)
+      tiles[r][c] = flat[r*4 + c];
+}
+
+// Draw tiles
+function drawTiles() {
+  puzzle.innerHTML = '';
+  for (let r=0; r<4; r++) {
+    for (let c=0; c<4; c++) {
+      const num = tiles[r][c];
+      const tile = document.createElement('div');
+      tile.classList.add('tile');
+      if (num === 0) tile.classList.add('empty');
+      else tile.textContent = num;
+
+      tile.style.top = r * (tileSize + gap) + 'px';
+      tile.style.left = c * (tileSize + gap) + 'px';
+
+      tile.addEventListener('click', () => moveTile(r,c));
+      puzzle.appendChild(tile);
+    }
+  }
+}
+
+// Find empty position
+function findEmpty() {
+  for (let r=0; r<4; r++)
+    for (let c=0; c<4; c++)
+      if (tiles[r][c] === 0) return [r,c];
+}
+
+// Click to move tile
+function moveTile(r,c) {
+  const [er,ec] = findEmpty();
+  if ((Math.abs(r-er) ===1 && c===ec) || (Math.abs(c-ec)===1 && r===er)) {
+    [tiles[r][c], tiles[er][ec]] = [tiles[er][ec], tiles[r][c]];
+    updatePositions();
+    checkWin();
+  }
+}
+
+// Update CSS positions
+function updatePositions() {
+  const children = puzzle.children;
+  for (let r=0; r<4; r++) {
+    for (let c=0; c<4; c++) {
+      const idx = r*4 + c;
+      const child = children[idx];
+      child.style.top = r * (tileSize + gap) + 'px';
+      child.style.left = c * (tileSize + gap) + 'px';
+    }
+  }
+}
+
+// Arrow key movement
+function moveEmpty(key) {
+  let [er,ec] = findEmpty();
+  let tr=er, tc=ec;
+
+  if(key==="ArrowUp") tr = er+1;     // move tile below empty up
+  if(key==="ArrowDown") tr = er-1;   // move tile above empty down
+  if(key==="ArrowLeft") tc = ec+1;   // move tile right of empty left
+  if(key==="ArrowRight") tc = ec-1;  // move tile left of empty right
+
+  if(tr>=0 && tr<4 && tc>=0 && tc<4){
+    [tiles[er][ec], tiles[tr][tc]] = [tiles[tr][tc], tiles[er][ec]];
+    drawTiles();
+    checkWin();
+  }
+}
+
+// Check win
+function checkWin() {
+  let count = 1;
+  for (let r=0;r<4;r++){
+    for (let c=0;c<4;c++){
+      if(r===3 && c===3){ if(tiles[r][c]===0) alert("You won!"); }
+      else if(tiles[r][c]!==count) return;
+      count++;
+    }
+  }
+}
+
+document.addEventListener("keydown", e=>{
+  if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"].includes(e.key)){
+    moveEmpty(e.key);
+  }
+});
+
+shuffleTiles();
+drawTiles();
+</script>
+</body>
+</html>
